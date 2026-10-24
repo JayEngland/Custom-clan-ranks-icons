@@ -44,5 +44,5 @@ Requires Java 11 or newer.
 This starts a RuneLite development client with the plugin loaded. To log in with a Jagex account, follow
 [Using Jagex Accounts](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
 
-`./gradlew shadowJar` builds `build/libs/custom-clan-rank-icons-1.0.0-all.jar`, a standalone jar of the same development client,
-which you can start with `java -ea -jar custom-clan-rank-icons-1.0.0-all.jar --developer-mode`.
+`./gradlew shadowJar` builds a standalone `-all.jar` in `build/libs`, a jar of the same development client,
+which you can start with `java -ea -jar <that jar> --developer-mode`.
