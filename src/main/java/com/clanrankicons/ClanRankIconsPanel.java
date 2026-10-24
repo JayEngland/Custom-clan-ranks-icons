@@ -29,8 +29,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -38,18 +38,17 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.Filepath;
 
 @Slf4j
 class ClanRankIconsPanel extends PluginPanel
@@ -216,18 +215,21 @@ class ClanRankIconsPanel extends PluginPanel
 
 	private void uploadImage(RankRow row)
 	{
-		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Icon for " + row.getTitle());
-		chooser.setFileFilter(new FileNameExtensionFilter("Images (PNG, JPG, GIF)", "png", "jpg", "jpeg", "gif"));
-		if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
+		List<Filepath> selected = new Filepath.Chooser()
+			.setIsOpen()
+			.setAcceptsFiles()
+			.setDialogTitle("Icon for " + row.getTitle())
+			.addExtensionFilter("Images (PNG, JPG, GIF)", "png", "jpg", "jpeg", "gif")
+			.showDialog(this);
+		if (selected == null || selected.isEmpty())
 		{
 			return;
 		}
 
-		File file = chooser.getSelectedFile();
-		try
+		Filepath file = selected.get(0);
+		try (InputStream in = file.openInputStream())
 		{
-			BufferedImage image = ImageIO.read(file);
+			BufferedImage image = ImageIO.read(in);
 			if (image == null)
 			{
 				JOptionPane.showMessageDialog(this, "That file isn't an image RuneLite can read.", "Clan Rank Icons", JOptionPane.WARNING_MESSAGE);
