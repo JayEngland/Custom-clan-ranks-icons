@@ -44,6 +44,7 @@ final class Presets
 		presets.put("Metals", Arrays.asList("Bronze", "Iron", "Steel", "Mithril", "Adamant", "Rune", "Dragon"));
 		presets.put("Gems", Arrays.asList("Opal", "Jade", "Red Topaz", "Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone", "Onyx", "Zenyte"));
 		presets.put("Royal court", Arrays.asList("Pawn", "Page", "Squire", "Knight", "Noble", "Monarch"));
+		presets.put("Sunfire", Arrays.asList("Death", "Skulled", "Beast", "Kitten", "Bob", "Hellcat", "Wrath", "Zamorakian"));
 		presets.put("Gods", Arrays.asList("Serenist", "Xerician", "Tirannian", "Armadylean", "Bandosian", "Guthixian", "Zarosian", "Zamorakian", "Saradominist"));
 		ALL = Collections.unmodifiableMap(presets);
 	}

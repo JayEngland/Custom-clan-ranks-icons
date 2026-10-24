@@ -57,6 +57,7 @@ Press **Presets** to give all your clan's ranks a themed set in one click, from 
 | Metals | Bronze, Iron, Steel, Mithril, Adamant, Rune, Dragon |
 | Gems | Opal, Jade, Red Topaz, Sapphire, Emerald, Ruby, Diamond, Dragonstone, Onyx, Zenyte |
 | Royal court | Pawn, Page, Squire, Knight, Noble, Monarch |
+| Sunfire | Death, Skulled, Beast, Kitten, Bob, Hellcat, Wrath, Zamorakian |
 | Gods | Serenist, Xerician, Tirannian, Armadylean, Bandosian, Guthixian, Zarosian, Zamorakian, Saradominist |
 
 If your clan has more ranks than the preset has icons, neighbouring ranks share an icon. Guests aren't changed.
