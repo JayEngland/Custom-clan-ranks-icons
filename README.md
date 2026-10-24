@@ -137,18 +137,13 @@ description, and a screenshot if it helps.
 
 
 ## Changelog
-**1.1**
+**1.0**
+- First release: pick an in-game icon for each rank in your clan, or hide it.
 - Icons are saved separately for each clan.
 - Presets: themed icon sets applied in one click.
 - Bulk apply: one icon for a range of ranks.
 - Player icons: give individual players their own icon in chat.
-- Search box and a "No icon" option in the icon picker.
 - Share codes to copy and paste icon setups between clanmates.
 - Optional clan rank icons in public chat.
-- Custom icons now also replace RuneLite's rank icons in Player Indicators' right-click menus.
-- Removed image uploads. Icons picked from uploads go back to normal.
-
-**1.0**
-- First release: pick an in-game icon or upload your own image for each clan rank.
-- Optional replacement of clan join/leave message icons.
+- Optional replacement of RuneLite's rank icons in join/leave messages and right-click menus.
 - Setting to show or hide the sidebar button.
