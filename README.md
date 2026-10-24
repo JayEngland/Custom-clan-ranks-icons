@@ -15,7 +15,7 @@ The change is client-side only: you see your icons, everyone else still sees the
 ## How to use
 
 1. Log in and join your clan.
-2. Open the **Clan Rank Icons** panel from the RuneLite sidebar (the gold shield).
+2. Open the **Clan Rank Icons** panel from the RuneLite sidebar (the gold star).
 3. Each row is one rank in your clan. On the left is the game's icon for that rank, next to it is your replacement
    (a dash means you haven't changed it), then the rank's title and number.
 4. Press **Game icon** to open a grid of every clan rank icon in the game. Hover an icon to see its name, and click one
