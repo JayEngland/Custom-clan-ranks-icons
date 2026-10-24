@@ -25,11 +25,14 @@
 package com.clanrankicons;
 
 import com.google.inject.Provides;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +121,11 @@ public class ClanRankIconsPlugin extends Plugin
 	 * Clan titles whose RuneLite chat icon (used in join/leave messages) we replaced.
 	 */
 	private final Set<ClanTitle> overriddenChatIcons = new HashSet<>();
+	/**
+	 * Copies of RuneLite's rank images (drawn by Player Indicators above heads) taken before we repainted them,
+	 * keyed by the image we painted over.
+	 */
+	private final Map<BufferedImage, BufferedImage> repaintedRankImages = new IdentityHashMap<>();
 	/**
 	 * What is currently applied, so we only touch the client when something changes.
 	 */
@@ -660,6 +668,37 @@ public class ClanRankIconsPlugin extends Plugin
 			modIcons[index] = ImageUtil.getImageIndexedSprite(image, client);
 			overriddenChatIcons.add(title);
 		}
+
+		repaintRankImage(title, choice);
+	}
+
+	/**
+	 * Paints the chosen icon over RuneLite's rank image, which Player Indicators draws next to names above heads.
+	 */
+	private void repaintRankImage(ClanTitle title, IconChoice choice)
+	{
+		BufferedImage rankImage = chatIconManager.getRankImage(title);
+		if (rankImage == null || repaintedRankImages.containsKey(rankImage))
+		{
+			return;
+		}
+
+		BufferedImage replacement = renderChoice(choice, rankImage.getWidth(), rankImage.getHeight());
+		if (replacement == null)
+		{
+			return;
+		}
+
+		repaintedRankImages.put(rankImage, ImageUtil.resizeCanvas(rankImage, rankImage.getWidth(), rankImage.getHeight()));
+		paintOver(rankImage, replacement);
+	}
+
+	private static void paintOver(BufferedImage target, BufferedImage source)
+	{
+		Graphics2D graphics = target.createGraphics();
+		graphics.setComposite(AlphaComposite.Src);
+		graphics.drawImage(source, 0, 0, null);
+		graphics.dispose();
 	}
 
 	/**
@@ -673,6 +712,13 @@ public class ClanRankIconsPlugin extends Plugin
 			overrides.remove(spriteId);
 		}
 		overriddenSprites.clear();
+
+		// Restore the rank images first, the chat icons below are rebuilt from them
+		for (Map.Entry<BufferedImage, BufferedImage> entry : repaintedRankImages.entrySet())
+		{
+			paintOver(entry.getKey(), entry.getValue());
+		}
+		repaintedRankImages.clear();
 
 		IndexedSprite[] modIcons = client.getModIcons();
 		for (ClanTitle title : overriddenChatIcons)

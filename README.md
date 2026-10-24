@@ -86,6 +86,7 @@ Your icons replace the originals everywhere the game draws them, on your screen 
 - The clan member list and the clan settings screens
 - Clan join/leave messages from RuneLite's Chat Channel plugin (optional)
 - Rank icons in right-click menus from RuneLite's Player Indicators plugin (optional)
+- Rank icons next to names above players' heads from RuneLite's Player Indicators plugin (optional)
 - Public chat, next to your clanmates' names (optional)
 
 Press **Reset** on a rank to go back to its normal icon, or **Reset all** at the top of the panel to put every rank in
@@ -96,7 +97,7 @@ your clan back to normal (player icons are kept). Turning the plugin off also re
 | Setting | What it does |
 | --- | --- |
 | Show sidebar button | Hide the Clan Rank Icons button once you've set things up. Your icons stay applied. |
-| Replace RuneLite's rank icons | Also swap the rank icons RuneLite adds itself, in join/leave messages, public chat and right-click menus. |
+| Replace RuneLite's rank icons | Also swap the rank icons RuneLite adds itself, in join/leave messages, public chat, right-click menus and above players' heads. |
 | Show icons in public chat | Show clan rank icons next to your clanmates' names in public chat. |
 
 
@@ -147,6 +148,6 @@ description, and a screenshot if it helps.
 - Player icons: give individual players their own icon in chat.
 - Share codes to copy and paste icon setups between clanmates.
 - Optional clan rank icons in public chat.
-- Optional replacement of RuneLite's rank icons in join/leave messages and right-click menus.
+- Optional replacement of RuneLite's rank icons in join/leave messages, right-click menus and above players' heads.
 - Reset all button to put every rank back to its normal icon.
 - Setting to show or hide the sidebar button.

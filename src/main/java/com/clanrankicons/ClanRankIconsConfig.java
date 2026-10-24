@@ -36,7 +36,7 @@ public interface ClanRankIconsConfig extends Config
 	@ConfigItem(
 		keyName = "replaceChatChannelIcons",
 		name = "Replace RuneLite's rank icons",
-		description = "Also replace the clan rank icons RuneLite adds itself: clan join/leave messages, public chat, and Player Indicators' right-click menus",
+		description = "Also replace the clan rank icons RuneLite adds itself: clan join/leave messages, public chat, and Player Indicators' right-click menus and overhead names",
 		position = 1
 	)
 	default boolean replaceChatChannelIcons()
