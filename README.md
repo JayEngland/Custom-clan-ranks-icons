@@ -16,22 +16,49 @@ The change is client-side only: you see your icons, everyone else still sees the
 
 1. Log in and join your clan.
 2. Open the **Clan Rank Icons** panel from the RuneLite sidebar (the gold shield).
-3. For each rank, press **Game icon** to choose another in-game icon, or **Upload** to use an image file.
-4. Press **Reset** to go back to the normal icon.
+3. Each row is one rank in your clan. On the left is the game's icon for that rank, next to it is your replacement
+   (a dash means you haven't changed it), then the rank's title and number.
+4. Press **Game icon** to open a grid of every clan rank icon in the game. Hover an icon to see its name, and click one
+   to use it for that rank.
+5. Or press **Upload** to choose an image file from your computer.
+6. Press **Reset** to go back to the normal icon.
 
-Your choices are saved in your RuneLite settings, so they come back next time you log in.
+The new icon appears straight away in clan chat and the clan member list. Your choices are saved in your RuneLite
+settings, so they come back next time you log in. If your clan adds or renames ranks while you're online, press
+**Refresh ranks** to update the list.
 
 ### Settings
 
 - **Keep aspect ratio**: keep the shape of uploaded images instead of stretching them to fill the icon.
 - **Replace join/leave icons**: also swap the icons in clan join/leave messages.
 
+### Tips for custom images
+
+- Rank icons are tiny (about 11 by 11 pixels in chat), so simple, bold images with a transparent background look best.
+- Semi-transparent edges are snapped to fully visible or fully hidden, because the game can't draw partial transparency.
+- Uploaded images are stored in your RuneLite settings, so you can delete or move the original file afterwards.
+
+## How it works
+
+The game picks a rank's icon from its **title** (for example "Sergeant" or "Captain"), and every title has its own
+sprite in the game cache. When you choose an icon for a rank, the plugin:
+
+1. Reads your clan's settings to find which title that rank uses, and which sprite the game draws for that title.
+2. Scales your chosen image to the same size as the original sprite.
+3. Gives the RuneLite client a sprite override for that sprite. The game then draws your image everywhere it would
+   have drawn the original, on your screen only.
+4. Swaps the matching icon in RuneLite's chat icon list as well, so join/leave messages match.
+
+Nothing is sent to the game server or to anyone else. The plugin checks your clan's ranks every few seconds, so if a
+rank's title changes your icon moves with it. Turning the plugin off removes every override and restores the
+original icons.
+
 ## Notes
 
-- Icons are matched by the rank's title. If two ranks in your clan share the same title (and so the same icon),
-  they will share a replacement too; the more senior rank's choice wins.
-- Because the game uses the same icon artwork for a title in every clan, a replaced icon also changes in your guest clan
-  if it uses the same title.
+- Because icons follow titles, two ranks in your clan that share a title also share a replacement; the more senior
+  rank's choice wins.
+- The game uses the same artwork for a title in every clan, so a replaced icon also changes in your guest clan if it
+  uses the same title.
 
 ## Building and running locally
 
