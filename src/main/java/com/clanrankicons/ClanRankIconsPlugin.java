@@ -74,7 +74,7 @@ import net.runelite.client.util.Text;
 @Slf4j
 @PluginDescriptor(
 	name = "Custom Clan Rank Icons",
-	description = "Pick your own icon for each rank in your clan. Only you can see the changes.",
+	description = "Pick your own icon for each rank in your clan.",
 	tags = {"clan", "rank", "icon", "custom", "chat"}
 )
 public class ClanRankIconsPlugin extends Plugin
