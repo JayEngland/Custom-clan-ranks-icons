@@ -77,7 +77,7 @@ import net.runelite.client.util.Text;
 public class ClanRankIconsPlugin extends Plugin
 {
 	/**
-	 * Before 1.1, choices were saved per rank only; these get moved to the first clan seen.
+	 * Early test builds saved choices per rank only; these get moved to the first clan seen.
 	 */
 	private static final String LEGACY_RANK_KEY_PREFIX = "rank_";
 	private static final String PLAYER_ICONS_KEY = "playerIcons";
@@ -518,7 +518,7 @@ public class ClanRankIconsPlugin extends Plugin
 	}
 
 	/**
-	 * Remembers which clan we're in, and moves any pre-1.1 choices over to it. Must be called on the client thread.
+	 * Remembers which clan we're in, and moves any choices from early test builds over to it. Must be called on the client thread.
 	 */
 	private void updateClanKey(ClanSettings settings)
 	{
