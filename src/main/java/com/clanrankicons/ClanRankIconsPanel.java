@@ -84,9 +84,11 @@ class ClanRankIconsPanel extends PluginPanel
 		header.add(help, BorderLayout.CENTER);
 
 		JPanel actions = new JPanel(new GridLayout(0, 1, 0, 4));
-		JButton refresh = new JButton("Refresh ranks");
+		JButton refresh = smallButton("Refresh ranks", "Reload your clan's ranks");
 		refresh.addActionListener(e -> plugin.refreshPanel());
-		actions.add(refresh);
+		JButton resetAll = smallButton("Reset all", "Put every rank back to its normal icon");
+		resetAll.addActionListener(e -> confirmResetAll());
+		actions.add(buttonPair(refresh, resetAll));
 
 		JButton presets = smallButton("Presets", "Give your ranks a themed set of icons in one click");
 		presets.addActionListener(e -> showPresetMenu(presets));
@@ -430,6 +432,23 @@ class ClanRankIconsPanel extends PluginPanel
 				plugin.setChoice(rank, choice);
 			}
 		});
+	}
+
+	private void confirmResetAll()
+	{
+		if (currentRows.isEmpty())
+		{
+			JOptionPane.showMessageDialog(this, "Log in and join your clan first.", DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
+		int answer = JOptionPane.showConfirmDialog(this,
+			"Put every rank in this clan back to its normal icon?\nPlayer icons aren't changed.",
+			DIALOG_TITLE, JOptionPane.OK_CANCEL_OPTION);
+		if (answer == JOptionPane.OK_OPTION)
+		{
+			plugin.resetAllChoices();
+		}
 	}
 
 	private void addPlayerIcon()

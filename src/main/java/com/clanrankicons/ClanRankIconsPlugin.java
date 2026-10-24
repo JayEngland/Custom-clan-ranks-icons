@@ -469,6 +469,26 @@ public class ClanRankIconsPlugin extends Plugin
 	}
 
 	/**
+	 * Puts every rank in the current clan back to its normal icon. Player icons are kept.
+	 */
+	void resetAllChoices()
+	{
+		String clan = clanKey;
+		if (clan == null)
+		{
+			return;
+		}
+
+		for (int rank = MIN_RANK; rank <= MAX_RANK; rank++)
+		{
+			if (configManager.getConfiguration(ClanRankIconsConfig.GROUP, rankKey(clan, rank)) != null)
+			{
+				configManager.unsetConfiguration(ClanRankIconsConfig.GROUP, rankKey(clan, rank));
+			}
+		}
+	}
+
+	/**
 	 * @return a share code for the current clan's in-game and hidden icons, or null when not in a clan
 	 */
 	@Nullable

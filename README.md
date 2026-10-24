@@ -87,7 +87,8 @@ Your icons replace the originals everywhere the game draws them, on your screen 
 - Rank icons in right-click menus from RuneLite's Player Indicators plugin (optional)
 - Public chat, next to your clanmates' names (optional)
 
-Press **Reset** on a rank to go back to its normal icon, or turn the plugin off to restore every icon at once.
+Press **Reset** on a rank to go back to its normal icon, or **Reset all** at the top of the panel to put every rank in
+your clan back to normal (player icons are kept). Turning the plugin off also restores every icon.
 
 
 ## Settings
@@ -128,7 +129,7 @@ Make sure you're logged in and in your clan, then press **Refresh ranks**.
 The game draws clan rank icons itself, and those follow the rank. A player icon is added next to their name instead.
 
 **How do I go back to the normal icons?**\
-Press **Reset** on a rank, or turn the plugin off to restore every icon at once.
+Press **Reset** on a rank, **Reset all** for every rank, or turn the plugin off to restore every icon at once.
 
 
 ## Support and suggestions
@@ -146,4 +147,5 @@ description, and a screenshot if it helps.
 - Share codes to copy and paste icon setups between clanmates.
 - Optional clan rank icons in public chat.
 - Optional replacement of RuneLite's rank icons in join/leave messages and right-click menus.
+- Reset all button to put every rank back to its normal icon.
 - Setting to show or hide the sidebar button.
