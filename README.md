@@ -80,24 +80,24 @@ A few things to know:
 
 
 ## FAQ
-**Can other players see my icons?**
+**Can other players see my icons?**\
 No. The change is drawn by your RuneLite client only. Everyone else still sees the normal icons.
 
-**I changed one rank, but another rank changed too. Why?**
+**I changed one rank, but another rank changed too. Why?**\
 The game picks icons by rank title, not rank number. If two ranks in your clan use the same title, they share an icon,
 so they also share your replacement. The more senior rank's choice is used.
 
-**Why did an icon in my guest clan change as well?**
+**Why did an icon in my guest clan change as well?**\
 A title uses the same artwork in every clan. If your guest clan uses a title you've replaced, you'll see your icon there too.
 
-**My clan isn't showing in the panel.**
+**My clan isn't showing in the panel.**\
 Make sure you're logged in and in your clan, then press **Refresh ranks**.
 
-**My uploaded image looks blurry or blocky.**
+**My uploaded image looks blurry or blocky.**\
 Rank icons are only about 11 by 11 pixels, so detailed images get squashed. Try a simple, high-contrast image with a
 transparent background, or crop it close to the subject before uploading.
 
-**How do I go back to the normal icons?**
+**How do I go back to the normal icons?**\
 Press **Reset** on a rank, or turn the plugin off to restore every icon at once.
 
 
