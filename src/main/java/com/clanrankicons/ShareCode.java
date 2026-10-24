@@ -29,7 +29,6 @@ import java.util.TreeMap;
 
 /**
  * Turns a clan's icon choices into a short text code that clanmates can paste into their own plugin.
- * Only in-game icons and hidden icons are included; uploaded images would make the code far too long.
  * Format: "CRI1:126=s1234,100=h"
  */
 final class ShareCode
@@ -46,19 +45,7 @@ final class ShareCode
 		for (Map.Entry<Integer, IconChoice> entry : new TreeMap<>(choices).descendingMap().entrySet())
 		{
 			IconChoice choice = entry.getValue();
-			String value;
-			if (choice.getType() == IconChoice.Type.SPRITE)
-			{
-				value = "s" + choice.getSpriteId();
-			}
-			else if (choice.getType() == IconChoice.Type.HIDDEN)
-			{
-				value = "h";
-			}
-			else
-			{
-				continue;
-			}
+			String value = choice.getType() == IconChoice.Type.SPRITE ? "s" + choice.getSpriteId() : "h";
 
 			if (sb.length() > PREFIX.length())
 			{

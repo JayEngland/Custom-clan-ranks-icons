@@ -26,7 +26,6 @@ package com.clanrankicons;
 
 import java.awt.image.BufferedImage;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
@@ -40,16 +39,9 @@ public class IconChoiceTest
 	}
 
 	@Test
-	public void uploadedImageIsShrunkAndRoundTrips() throws Exception
+	public void imagesFromOlderVersionsAreIgnored()
 	{
-		IconChoice choice = IconChoice.image(new BufferedImage(200, 100, BufferedImage.TYPE_INT_ARGB));
-		IconChoice parsed = IconChoice.parse(choice.serialize());
-		assertEquals(choice, parsed);
-
-		BufferedImage decoded = parsed.decodeImage();
-		assertNotNull(decoded);
-		assertEquals(32, decoded.getWidth());
-		assertEquals(16, decoded.getHeight());
+		assertNull(IconChoice.parse("image:iVBORw0KGgo="));
 	}
 
 	@Test

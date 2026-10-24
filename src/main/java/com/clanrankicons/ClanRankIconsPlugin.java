@@ -26,9 +26,9 @@ package com.clanrankicons;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,6 +80,7 @@ public class ClanRankIconsPlugin extends Plugin
 	 * Before 1.1, choices were saved per rank only; these get moved to the first clan seen.
 	 */
 	private static final String LEGACY_RANK_KEY_PREFIX = "rank_";
+	private static final String PLAYER_ICONS_KEY = "playerIcons";
 	static final int MIN_RANK = -1;
 	static final int MAX_RANK = 127;
 	private static final int CHAT_ICON_SIZE = 11;
@@ -127,6 +128,13 @@ public class ClanRankIconsPlugin extends Plugin
 	 * Config key part for the clan we're in, so each clan keeps its own icons. Null when not in a clan.
 	 */
 	private volatile String clanKey;
+	/**
+	 * Chat icon ids (from ChatIconManager) for players with their own icon, keyed by normalised name.
+	 * Chat icons can't be unregistered, so ids no longer in use are kept and reused.
+	 */
+	private final Map<String, Integer> playerChatIcons = new HashMap<>();
+	private final List<Integer> spareChatIcons = new ArrayList<>();
+	private boolean playerIconsDirty = true;
 
 	@Provides
 	ClanRankIconsConfig provideConfig(ConfigManager configManager)
@@ -152,7 +160,9 @@ public class ClanRankIconsPlugin extends Plugin
 		clientThread.invokeLater(() ->
 		{
 			dirty = true;
+			playerIconsDirty = true;
 			applyOverrides();
+			refreshPlayerIcons();
 		});
 		refreshPanel();
 	}
@@ -173,6 +183,7 @@ public class ClanRankIconsPlugin extends Plugin
 		if (++tickCounter >= RECHECK_TICKS)
 		{
 			tickCounter = 0;
+			refreshPlayerIcons();
 			if (applyOverrides())
 			{
 				refreshPanel();
@@ -197,27 +208,34 @@ public class ClanRankIconsPlugin extends Plugin
 		{
 			// RuneLite rebuilds its chat icons when the client restarts, so put ours back
 			dirty = true;
+			playerIconsDirty = true;
 		}
 	}
 
 	@Subscribe
 	public void onScriptCallbackEvent(ScriptCallbackEvent event)
 	{
-		if (!"chatMessageBuilding".equals(event.getEventName()) || !config.showIconsInPublicChat())
+		if (!"chatMessageBuilding".equals(event.getEventName()))
 		{
 			return;
 		}
 
 		int uid = client.getIntStack()[client.getIntStackSize() - 1];
 		MessageNode messageNode = client.getMessages().get(uid);
-		if (messageNode == null
-			|| (messageNode.getType() != ChatMessageType.PUBLICCHAT && messageNode.getType() != ChatMessageType.MODCHAT))
+		if (messageNode == null)
 		{
 			return;
 		}
 
-		ClanSettings settings = client.getClanSettings();
-		if (settings == null)
+		ChatMessageType type = messageNode.getType();
+		boolean publicChat = type == ChatMessageType.PUBLICCHAT || type == ChatMessageType.MODCHAT;
+		boolean playerMessage = publicChat
+			|| type == ChatMessageType.CLAN_CHAT
+			|| type == ChatMessageType.CLAN_GUEST_CHAT
+			|| type == ChatMessageType.FRIENDSCHAT
+			|| type == ChatMessageType.PRIVATECHAT
+			|| type == ChatMessageType.MODPRIVATECHAT;
+		if (!playerMessage)
 		{
 			return;
 		}
@@ -225,18 +243,37 @@ public class ClanRankIconsPlugin extends Plugin
 		Object[] objectStack = client.getObjectStack();
 		int objectStackSize = client.getObjectStackSize();
 		String name = (String) objectStack[objectStackSize - 3];
-		ClanMember member = settings.findMember(Text.toJagexName(Text.removeTags(name)));
-		if (member == null || member.getRank() == null)
+
+		// A player's own icon wins over their rank icon
+		Integer playerIcon = playerChatIcons.get(PlayerIcons.normalizeName(name));
+		int iconNumber = playerIcon == null ? -1 : chatIconManager.chatIconIndex(playerIcon);
+		if (iconNumber < 0 && publicChat && config.showIconsInPublicChat())
 		{
-			return;
+			iconNumber = clanIconNumber(name);
 		}
 
-		ClanTitle title = settings.titleForRank(member.getRank());
-		int iconNumber = title == null ? -1 : chatIconManager.getIconNumber(title);
 		if (iconNumber > -1)
 		{
 			objectStack[objectStackSize - 3] = "<img=" + iconNumber + ">" + name;
 		}
+	}
+
+	private int clanIconNumber(String name)
+	{
+		ClanSettings settings = client.getClanSettings();
+		if (settings == null)
+		{
+			return -1;
+		}
+
+		ClanMember member = settings.findMember(Text.toJagexName(Text.removeTags(name)));
+		if (member == null || member.getRank() == null)
+		{
+			return -1;
+		}
+
+		ClanTitle title = settings.titleForRank(member.getRank());
+		return title == null ? -1 : chatIconManager.getIconNumber(title);
 	}
 
 	@Subscribe
@@ -262,10 +299,144 @@ public class ClanRankIconsPlugin extends Plugin
 
 		clientThread.invokeLater(() ->
 		{
-			dirty = true;
-			applyOverrides();
+			if (PLAYER_ICONS_KEY.equals(event.getKey()))
+			{
+				playerIconsDirty = true;
+				refreshPlayerIcons();
+			}
+			else
+			{
+				dirty = true;
+				applyOverrides();
+			}
 		});
 		refreshPanel();
+	}
+
+	Map<String, IconChoice> getPlayerIcons()
+	{
+		return PlayerIcons.parse(configManager.getConfiguration(ClanRankIconsConfig.GROUP, PLAYER_ICONS_KEY));
+	}
+
+	void setPlayerIcon(String name, @Nullable IconChoice choice)
+	{
+		String key = PlayerIcons.normalizeName(name);
+		if (key.isEmpty())
+		{
+			return;
+		}
+
+		Map<String, IconChoice> icons = getPlayerIcons();
+		if (choice == null)
+		{
+			icons.remove(key);
+		}
+		else
+		{
+			icons.put(key, choice);
+		}
+
+		if (icons.isEmpty())
+		{
+			configManager.unsetConfiguration(ClanRankIconsConfig.GROUP, PLAYER_ICONS_KEY);
+		}
+		else
+		{
+			configManager.setConfiguration(ClanRankIconsConfig.GROUP, PLAYER_ICONS_KEY, PlayerIcons.serialize(icons));
+		}
+	}
+
+	/**
+	 * Builds a chat icon for every player with their own icon. Must be called on the client thread.
+	 */
+	private void refreshPlayerIcons()
+	{
+		if (!playerIconsDirty)
+		{
+			return;
+		}
+
+		spareChatIcons.addAll(playerChatIcons.values());
+		playerChatIcons.clear();
+		for (Map.Entry<String, IconChoice> entry : getPlayerIcons().entrySet())
+		{
+			if (entry.getValue().getType() == IconChoice.Type.HIDDEN)
+			{
+				continue;
+			}
+
+			BufferedImage image = renderChoice(entry.getValue(), CHAT_ICON_SIZE, CHAT_ICON_SIZE);
+			if (image == null)
+			{
+				// Sprites aren't loaded yet, try again later
+				return;
+			}
+
+			int iconId;
+			if (spareChatIcons.isEmpty())
+			{
+				iconId = chatIconManager.registerChatIcon(image);
+			}
+			else
+			{
+				iconId = spareChatIcons.remove(spareChatIcons.size() - 1);
+				chatIconManager.updateChatIcon(iconId, image);
+			}
+			playerChatIcons.put(entry.getKey(), iconId);
+		}
+		playerIconsDirty = false;
+	}
+
+	/**
+	 * Gives the current clan's ranks a themed set of in-game icons, lowest rank to highest. Guests are left alone.
+	 */
+	void applyPreset(String presetName)
+	{
+		List<String> preset = Presets.ALL.get(presetName);
+		if (preset == null)
+		{
+			return;
+		}
+
+		clientThread.invokeLater(() ->
+		{
+			EnumComposition rankGraphics = client.getEnum(EnumID.CLAN_RANK_GRAPHIC);
+			EnumComposition rankNames = client.getEnum(EnumID.CLAN_RANK_NAME);
+			Map<String, Integer> spritesByName = new HashMap<>();
+			for (int key : rankNames.getKeys())
+			{
+				spritesByName.putIfAbsent(Presets.normalize(rankNames.getStringValue(key)), rankGraphics.getIntValue(key));
+			}
+
+			List<Integer> sprites = new ArrayList<>();
+			for (String name : preset)
+			{
+				Integer spriteId = spritesByName.get(Presets.normalize(name));
+				if (spriteId != null && spriteId >= 0)
+				{
+					sprites.add(spriteId);
+				}
+			}
+
+			List<Integer> ranks = new ArrayList<>();
+			for (RankRow row : buildRows())
+			{
+				if (row.getRank() != ClanRank.GUEST.getRank())
+				{
+					ranks.add(row.getRank());
+				}
+			}
+			Collections.sort(ranks);
+			if (sprites.isEmpty() || ranks.isEmpty())
+			{
+				return;
+			}
+
+			for (int i = 0; i < ranks.size(); i++)
+			{
+				setChoice(ranks.get(i), IconChoice.sprite(sprites.get(Presets.iconIndexFor(i, ranks.size(), sprites.size()))));
+			}
+		});
 	}
 
 	@Nullable
@@ -286,11 +457,6 @@ public class ClanRankIconsPlugin extends Plugin
 		{
 			configManager.setConfiguration(ClanRankIconsConfig.GROUP, rankKey(clan, rank), choice.serialize());
 		}
-	}
-
-	void setUploadedImage(int rank, BufferedImage image) throws IOException
-	{
-		setChoice(rank, IconChoice.image(image));
 	}
 
 	void resetChoice(int rank)
@@ -515,24 +681,12 @@ public class ClanRankIconsPlugin extends Plugin
 			return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		}
 
-		BufferedImage source;
-		boolean keepAspectRatio = true;
-		if (choice.getType() == IconChoice.Type.SPRITE)
-		{
-			source = spriteManager.getSprite(choice.getSpriteId(), 0);
-		}
-		else
-		{
-			source = choice.decodeImage();
-			keepAspectRatio = config.keepAspectRatio();
-		}
-
+		BufferedImage source = spriteManager.getSprite(choice.getSpriteId(), 0);
 		if (source == null)
 		{
 			return null;
 		}
-
-		return ImageScaling.hardenAlpha(ImageScaling.fit(source, width, height, keepAspectRatio, true));
+		return ImageScaling.hardenAlpha(ImageScaling.fit(source, width, height, true, true));
 	}
 
 	/**
@@ -549,7 +703,13 @@ public class ClanRankIconsPlugin extends Plugin
 			}
 
 			List<RankRow> rows = buildRows();
-			SwingUtilities.invokeLater(() -> currentPanel.showRanks(rows, client.getClanSettings() != null));
+			List<PlayerRow> players = new ArrayList<>();
+			for (Map.Entry<String, IconChoice> entry : getPlayerIcons().entrySet())
+			{
+				players.add(new PlayerRow(entry.getKey(), renderChoice(entry.getValue(), CHAT_ICON_SIZE, CHAT_ICON_SIZE)));
+			}
+			boolean inClan = client.getClanSettings() != null;
+			SwingUtilities.invokeLater(() -> currentPanel.showRanks(rows, players, inClan));
 		});
 	}
 

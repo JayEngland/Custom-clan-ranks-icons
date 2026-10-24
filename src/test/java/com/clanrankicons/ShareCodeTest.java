@@ -24,7 +24,6 @@
  */
 package com.clanrankicons;
 
-import java.awt.image.BufferedImage;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import static org.junit.Assert.assertEquals;
@@ -33,12 +32,11 @@ import org.junit.Test;
 public class ShareCodeTest
 {
 	@Test
-	public void roundTripsSpritesAndHiddenIcons() throws Exception
+	public void roundTripsSpritesAndHiddenIcons()
 	{
 		Map<Integer, IconChoice> choices = new LinkedHashMap<>();
 		choices.put(126, IconChoice.sprite(1234));
 		choices.put(10, IconChoice.hidden());
-		choices.put(5, IconChoice.image(new BufferedImage(4, 4, BufferedImage.TYPE_INT_ARGB)));
 
 		String code = ShareCode.encode(choices);
 		assertEquals("CRI1:126=s1234,10=h", code);
@@ -65,5 +63,25 @@ public class ShareCodeTest
 	public void hiddenChoiceRoundTrips()
 	{
 		assertEquals(IconChoice.hidden(), IconChoice.parse(IconChoice.hidden().serialize()));
+	}
+
+	@Test
+	public void presetSpreadsIconsFromLowestToHighest()
+	{
+		// 3 ranks over 7 icons: lowest gets the first, highest the last
+		assertEquals(0, Presets.iconIndexFor(0, 3, 7));
+		assertEquals(3, Presets.iconIndexFor(1, 3, 7));
+		assertEquals(6, Presets.iconIndexFor(2, 3, 7));
+		assertEquals(6, Presets.iconIndexFor(0, 1, 7));
+		assertEquals("redtopaz", Presets.normalize("Red Topaz"));
+	}
+
+	@Test
+	public void playerIconsRoundTrip()
+	{
+		Map<String, IconChoice> icons = new LinkedHashMap<>();
+		icons.put("zezima", IconChoice.sprite(42));
+		icons.put("lynx titan", IconChoice.sprite(7));
+		assertEquals(icons, PlayerIcons.parse(PlayerIcons.serialize(icons)));
 	}
 }

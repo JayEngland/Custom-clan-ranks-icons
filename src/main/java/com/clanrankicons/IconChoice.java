@@ -24,60 +24,41 @@
  */
 package com.clanrankicons;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Base64;
 import javax.annotation.Nullable;
-import javax.imageio.ImageIO;
 import lombok.Value;
 
 /**
- * The icon a player picked for a rank: another game sprite, an image they uploaded, or no icon at all.
- * Stored in the RuneLite config as "sprite:&lt;id&gt;", "image:&lt;base64 png&gt;" or "hidden".
+ * The icon a player picked for a rank: another game sprite, or no icon at all.
+ * Stored in the RuneLite config as "sprite:&lt;id&gt;" or "hidden".
  */
 @Value
 class IconChoice
 {
 	private static final String SPRITE_PREFIX = "sprite:";
-	private static final String IMAGE_PREFIX = "image:";
 	private static final String HIDDEN = "hidden";
-
-	/**
-	 * Uploaded images are shrunk to this size before saving, so the config stays small.
-	 */
-	private static final int MAX_STORED_SIZE = 32;
 
 	enum Type
 	{
 		SPRITE,
-		IMAGE,
 		HIDDEN
 	}
 
 	Type type;
 	int spriteId;
-	String imageData;
 
 	static IconChoice sprite(int spriteId)
 	{
-		return new IconChoice(Type.SPRITE, spriteId, null);
+		return new IconChoice(Type.SPRITE, spriteId);
 	}
 
 	static IconChoice hidden()
 	{
-		return new IconChoice(Type.HIDDEN, -1, null);
+		return new IconChoice(Type.HIDDEN, -1);
 	}
 
-	static IconChoice image(BufferedImage image) throws IOException
-	{
-		BufferedImage scaled = ImageScaling.fit(image, MAX_STORED_SIZE, MAX_STORED_SIZE, true, false);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ImageIO.write(scaled, "png", out);
-		return new IconChoice(Type.IMAGE, -1, Base64.getEncoder().encodeToString(out.toByteArray()));
-	}
-
+	/**
+	 * @return the choice, or null for anything else (including images uploaded with versions before 1.1)
+	 */
 	@Nullable
 	static IconChoice parse(@Nullable String value)
 	{
@@ -96,10 +77,6 @@ class IconChoice
 			{
 				return hidden();
 			}
-			if (value.startsWith(IMAGE_PREFIX))
-			{
-				return new IconChoice(Type.IMAGE, -1, value.substring(IMAGE_PREFIX.length()));
-			}
 		}
 		catch (NumberFormatException ignored)
 		{
@@ -109,32 +86,6 @@ class IconChoice
 
 	String serialize()
 	{
-		switch (type)
-		{
-			case SPRITE:
-				return SPRITE_PREFIX + spriteId;
-			case HIDDEN:
-				return HIDDEN;
-			default:
-				return IMAGE_PREFIX + imageData;
-		}
-	}
-
-	@Nullable
-	BufferedImage decodeImage()
-	{
-		if (type != Type.IMAGE)
-		{
-			return null;
-		}
-
-		try
-		{
-			return ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(imageData)));
-		}
-		catch (IOException | IllegalArgumentException e)
-		{
-			return null;
-		}
+		return type == Type.SPRITE ? SPRITE_PREFIX + spriteId : HIDDEN;
 	}
 }

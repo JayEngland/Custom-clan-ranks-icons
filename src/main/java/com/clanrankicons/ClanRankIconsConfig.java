@@ -34,21 +34,10 @@ public interface ClanRankIconsConfig extends Config
 	String GROUP = "customclanrankicons";
 
 	@ConfigItem(
-		keyName = "keepAspectRatio",
-		name = "Keep aspect ratio",
-		description = "Keep the shape of uploaded images when fitting them into the rank icon's space, instead of stretching them",
-		position = 1
-	)
-	default boolean keepAspectRatio()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "replaceChatChannelIcons",
-		name = "Replace join/leave icons",
-		description = "Also replace the rank icons shown in clan join/leave messages added by RuneLite's Chat Channel plugin",
-		position = 2
+		name = "Replace RuneLite's rank icons",
+		description = "Also replace the clan rank icons RuneLite adds itself: clan join/leave messages, public chat, and Player Indicators' right-click menus",
+		position = 1
 	)
 	default boolean replaceChatChannelIcons()
 	{
@@ -70,7 +59,7 @@ public interface ClanRankIconsConfig extends Config
 		keyName = "showIconsInPublicChat",
 		name = "Show icons in public chat",
 		description = "Show clan rank icons next to your clanmates' names in public chat",
-		position = 3
+		position = 2
 	)
 	default boolean showIconsInPublicChat()
 	{
