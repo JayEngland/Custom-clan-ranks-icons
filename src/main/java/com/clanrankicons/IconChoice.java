@@ -57,7 +57,7 @@ class IconChoice
 	}
 
 	/**
-	 * @return the choice, or null for anything else (including images uploaded with early test builds)
+	 * @return the choice, or null for anything else (including values saved by early test builds)
 	 */
 	@Nullable
 	static IconChoice parse(@Nullable String value)
