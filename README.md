@@ -2,8 +2,20 @@
 Pick your own icon for every rank in your clan. Only you see the change.
 
 [![Active Installs](http://img.shields.io/endpoint?url=https://api.runelite.net/pluginhub/shields/installs/plugin/custom-clan-rank-icons)](https://runelite.net/plugin-hub/show/custom-clan-rank-icons)
+[![Plugin Rank](http://img.shields.io/endpoint?url=https://api.runelite.net/pluginhub/shields/rank/plugin/custom-clan-rank-icons)](https://runelite.net/plugin-hub/show/custom-clan-rank-icons)
 
 <img src="docs/example-swaps.png" alt="Examples of swapped clan rank icons" width="610" />
+
+- [Installation](#installation)
+- [Rank icon panel](#rank-icon-panel)
+- [Pick an in-game icon](#pick-an-in-game-icon)
+- [Upload your own image](#upload-your-own-image)
+- [Where your icons show up](#where-your-icons-show-up)
+- [Settings](#settings)
+- [How it works](#how-it-works)
+- [FAQ](#faq)
+- [Support and suggestions](#support-and-suggestions)
+- [Changelog](#changelog)
 
 
 ## Installation
@@ -65,3 +77,37 @@ A few things to know:
 - Icons follow titles, so two ranks in your clan that share a title also share a replacement. The more senior rank's choice wins.
 - The game uses the same artwork for a title in every clan, so a replaced icon also changes in your guest clan if it uses the same title.
 - If your clan changes a rank's title, your icon follows the rank to its new title automatically.
+
+
+## FAQ
+**Can other players see my icons?**
+No. The change is drawn by your RuneLite client only. Everyone else still sees the normal icons.
+
+**I changed one rank, but another rank changed too. Why?**
+The game picks icons by rank title, not rank number. If two ranks in your clan use the same title, they share an icon,
+so they also share your replacement. The more senior rank's choice is used.
+
+**Why did an icon in my guest clan change as well?**
+A title uses the same artwork in every clan. If your guest clan uses a title you've replaced, you'll see your icon there too.
+
+**My clan isn't showing in the panel.**
+Make sure you're logged in and in your clan, then press **Refresh ranks**.
+
+**My uploaded image looks blurry or blocky.**
+Rank icons are only about 11 by 11 pixels, so detailed images get squashed. Try a simple, high-contrast image with a
+transparent background, or crop it close to the subject before uploading.
+
+**How do I go back to the normal icons?**
+Press **Reset** on a rank, or turn the plugin off to restore every icon at once.
+
+
+## Support and suggestions
+Found a bug or have an idea? [Open an issue](https://github.com/JayEngland/Custom-clan-ranks-icons/issues) with a short
+description, and a screenshot if it helps.
+
+
+## Changelog
+**1.0**
+- First release: pick an in-game icon or upload your own image for each clan rank.
+- Optional replacement of clan join/leave message icons.
+- Setting to show or hide the sidebar button.
