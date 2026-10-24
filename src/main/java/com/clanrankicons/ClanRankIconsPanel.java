@@ -28,6 +28,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,8 +44,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -75,9 +80,19 @@ class ClanRankIconsPanel extends PluginPanel
 		help.setFont(FontManager.getRunescapeSmallFont());
 		help.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		header.add(help, BorderLayout.CENTER);
+		JPanel actions = new JPanel(new GridLayout(0, 1, 0, 4));
 		JButton refresh = new JButton("Refresh ranks");
 		refresh.addActionListener(e -> plugin.refreshPanel());
-		header.add(refresh, BorderLayout.SOUTH);
+		actions.add(refresh);
+		JPanel share = new JPanel(new GridLayout(1, 2, 4, 0));
+		JButton copyCode = smallButton("Copy share code", "Copy your icons as a code clanmates can paste into this plugin");
+		copyCode.addActionListener(e -> copyShareCode());
+		JButton pasteCode = smallButton("Paste share code", "Use icons from a clanmate's share code");
+		pasteCode.addActionListener(e -> pasteShareCode());
+		share.add(copyCode);
+		share.add(pasteCode);
+		actions.add(share);
+		header.add(actions, BorderLayout.SOUTH);
 		add(header, BorderLayout.NORTH);
 
 		rankList.setLayout(new BoxLayout(rankList, BoxLayout.Y_AXIS));
@@ -128,7 +143,7 @@ class ClanRankIconsPanel extends PluginPanel
 		JPanel icons = new JPanel(new GridLayout(1, 2, 2, 0));
 		icons.setOpaque(false);
 		JLabel original = iconLabel(row.getOriginalIcon(), "Original icon");
-		JLabel custom = iconLabel(row.getCustomIcon(), "Your icon");
+		JLabel custom = row.isHidden() ? textLabel("off", "Icon hidden") : iconLabel(row.getCustomIcon(), "Your icon");
 		icons.add(original);
 		icons.add(custom);
 		panel.add(icons, BorderLayout.WEST);
@@ -172,6 +187,17 @@ class ClanRankIconsPanel extends PluginPanel
 		return label;
 	}
 
+	private static JLabel textLabel(String text, String tooltip)
+	{
+		JLabel label = new JLabel(text);
+		label.setFont(FontManager.getRunescapeSmallFont());
+		label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		label.setPreferredSize(new Dimension(ICON_PREVIEW_SIZE, ICON_PREVIEW_SIZE));
+		label.setToolTipText(tooltip);
+		return label;
+	}
+
 	private static JButton smallButton(String text, String tooltip)
 	{
 		JButton button = new JButton(text);
@@ -190,27 +216,121 @@ class ClanRankIconsPanel extends PluginPanel
 
 			JPanel grid = new JPanel(new GridLayout(0, PICKER_COLUMNS, 2, 2));
 			grid.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-			for (GameIcon icon : icons)
+
+			JTextField search = new JTextField();
+			search.setToolTipText("Search icons by name");
+			Runnable fillGrid = () ->
 			{
-				JButton button = new JButton(new ImageIcon(icon.getImage()));
-				button.setToolTipText(icon.getName());
-				button.setPreferredSize(new Dimension(32, 32));
-				button.addActionListener(e ->
+				String query = search.getText().trim().toLowerCase();
+				grid.removeAll();
+				for (GameIcon icon : icons)
 				{
-					plugin.setChoice(row.getRank(), IconChoice.sprite(icon.getSpriteId()));
-					dialog.dispose();
-				});
-				grid.add(button);
-			}
+					if (!query.isEmpty() && (icon.getName() == null || !icon.getName().toLowerCase().contains(query)))
+					{
+						continue;
+					}
+
+					JButton button = new JButton(new ImageIcon(icon.getImage()));
+					button.setToolTipText(icon.getName());
+					button.setPreferredSize(new Dimension(32, 32));
+					button.addActionListener(e ->
+					{
+						plugin.setChoice(row.getRank(), IconChoice.sprite(icon.getSpriteId()));
+						dialog.dispose();
+					});
+					grid.add(button);
+				}
+				grid.revalidate();
+				grid.repaint();
+			};
+			search.getDocument().addDocumentListener(new DocumentListener()
+			{
+				@Override
+				public void insertUpdate(DocumentEvent e)
+				{
+					fillGrid.run();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e)
+				{
+					fillGrid.run();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e)
+				{
+					fillGrid.run();
+				}
+			});
+			fillGrid.run();
+
+			JButton noIcon = new JButton("No icon");
+			noIcon.setToolTipText("Hide this rank's icon");
+			noIcon.addActionListener(e ->
+			{
+				plugin.setChoice(row.getRank(), IconChoice.hidden());
+				dialog.dispose();
+			});
+
+			JPanel top = new JPanel(new BorderLayout(6, 0));
+			top.setBorder(BorderFactory.createEmptyBorder(6, 6, 0, 6));
+			top.add(new JLabel("Search:"), BorderLayout.WEST);
+			top.add(search, BorderLayout.CENTER);
+			top.add(noIcon, BorderLayout.EAST);
 
 			JScrollPane scroll = new JScrollPane(grid);
-			scroll.setPreferredSize(new Dimension(260, 320));
+			scroll.setPreferredSize(new Dimension(280, 320));
 			scroll.getVerticalScrollBar().setUnitIncrement(16);
-			dialog.add(scroll);
+			dialog.setLayout(new BorderLayout());
+			dialog.add(top, BorderLayout.NORTH);
+			dialog.add(scroll, BorderLayout.CENTER);
 			dialog.pack();
 			dialog.setLocationRelativeTo(this);
 			dialog.setVisible(true);
 		});
+	}
+
+	private void copyShareCode()
+	{
+		String code = plugin.exportShareCode();
+		if (code == null)
+		{
+			JOptionPane.showMessageDialog(this, "Log in and join your clan first.", "Clan Rank Icons", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(code), null);
+		JOptionPane.showMessageDialog(this,
+			"Share code copied. Clanmates can use Paste share code to get the same icons.\n"
+				+ "Uploaded images aren't included, only in-game and hidden icons.",
+			"Clan Rank Icons", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	private void pasteShareCode()
+	{
+		String code = JOptionPane.showInputDialog(this, "Paste a share code:", "Clan Rank Icons", JOptionPane.PLAIN_MESSAGE);
+		if (code == null || code.trim().isEmpty())
+		{
+			return;
+		}
+
+		try
+		{
+			int changed = plugin.importShareCode(code);
+			if (changed < 0)
+			{
+				JOptionPane.showMessageDialog(this, "Log in and join your clan first.", "Clan Rank Icons", JOptionPane.INFORMATION_MESSAGE);
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(this, "Updated " + changed + (changed == 1 ? " rank." : " ranks."), "Clan Rank Icons", JOptionPane.INFORMATION_MESSAGE);
+			}
+		}
+		catch (IllegalArgumentException ex)
+		{
+			JOptionPane.showMessageDialog(this, "That isn't a valid share code.", "Clan Rank Icons", JOptionPane.WARNING_MESSAGE);
+		}
 	}
 
 	private void uploadImage(RankRow row)

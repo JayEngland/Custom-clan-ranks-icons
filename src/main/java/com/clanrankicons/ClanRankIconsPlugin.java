@@ -40,11 +40,13 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.GameState;
 import net.runelite.api.IndexedSprite;
+import net.runelite.api.MessageNode;
 import net.runelite.api.clan.ClanMember;
 import net.runelite.api.clan.ClanRank;
 import net.runelite.api.clan.ClanSettings;
@@ -52,6 +54,7 @@ import net.runelite.api.clan.ClanTitle;
 import net.runelite.api.events.ClanChannelChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -63,6 +66,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.Text;
 
 @Slf4j
 @PluginDescriptor(
@@ -72,9 +76,12 @@ import net.runelite.client.util.ImageUtil;
 )
 public class ClanRankIconsPlugin extends Plugin
 {
-	private static final String RANK_KEY_PREFIX = "rank_";
-	private static final int MIN_RANK = -1;
-	private static final int MAX_RANK = 127;
+	/**
+	 * Before 1.1, choices were saved per rank only; these get moved to the first clan seen.
+	 */
+	private static final String LEGACY_RANK_KEY_PREFIX = "rank_";
+	static final int MIN_RANK = -1;
+	static final int MAX_RANK = 127;
 	private static final int CHAT_ICON_SIZE = 11;
 	private static final int RECHECK_TICKS = 5;
 
@@ -116,6 +123,10 @@ public class ClanRankIconsPlugin extends Plugin
 	private Map<ClanTitle, IconChoice> appliedPlan = Collections.emptyMap();
 	private boolean dirty;
 	private int tickCounter;
+	/**
+	 * Config key part for the clan we're in, so each clan keeps its own icons. Null when not in a clan.
+	 */
+	private volatile String clanKey;
 
 	@Provides
 	ClanRankIconsConfig provideConfig(ConfigManager configManager)
@@ -190,6 +201,45 @@ public class ClanRankIconsPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onScriptCallbackEvent(ScriptCallbackEvent event)
+	{
+		if (!"chatMessageBuilding".equals(event.getEventName()) || !config.showIconsInPublicChat())
+		{
+			return;
+		}
+
+		int uid = client.getIntStack()[client.getIntStackSize() - 1];
+		MessageNode messageNode = client.getMessages().get(uid);
+		if (messageNode == null
+			|| (messageNode.getType() != ChatMessageType.PUBLICCHAT && messageNode.getType() != ChatMessageType.MODCHAT))
+		{
+			return;
+		}
+
+		ClanSettings settings = client.getClanSettings();
+		if (settings == null)
+		{
+			return;
+		}
+
+		Object[] objectStack = client.getObjectStack();
+		int objectStackSize = client.getObjectStackSize();
+		String name = (String) objectStack[objectStackSize - 3];
+		ClanMember member = settings.findMember(Text.toJagexName(Text.removeTags(name)));
+		if (member == null || member.getRank() == null)
+		{
+			return;
+		}
+
+		ClanTitle title = settings.titleForRank(member.getRank());
+		int iconNumber = title == null ? -1 : chatIconManager.getIconNumber(title);
+		if (iconNumber > -1)
+		{
+			objectStack[objectStackSize - 3] = "<img=" + iconNumber + ">" + name;
+		}
+	}
+
+	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
 		if (!ClanRankIconsConfig.GROUP.equals(event.getGroup()))
@@ -221,12 +271,21 @@ public class ClanRankIconsPlugin extends Plugin
 	@Nullable
 	private IconChoice getChoice(int rank)
 	{
-		return IconChoice.parse(configManager.getConfiguration(ClanRankIconsConfig.GROUP, RANK_KEY_PREFIX + rank));
+		String clan = clanKey;
+		if (clan == null)
+		{
+			return null;
+		}
+		return IconChoice.parse(configManager.getConfiguration(ClanRankIconsConfig.GROUP, rankKey(clan, rank)));
 	}
 
 	void setChoice(int rank, IconChoice choice)
 	{
-		configManager.setConfiguration(ClanRankIconsConfig.GROUP, RANK_KEY_PREFIX + rank, choice.serialize());
+		String clan = clanKey;
+		if (clan != null)
+		{
+			configManager.setConfiguration(ClanRankIconsConfig.GROUP, rankKey(clan, rank), choice.serialize());
+		}
 	}
 
 	void setUploadedImage(int rank, BufferedImage image) throws IOException
@@ -236,7 +295,89 @@ public class ClanRankIconsPlugin extends Plugin
 
 	void resetChoice(int rank)
 	{
-		configManager.unsetConfiguration(ClanRankIconsConfig.GROUP, RANK_KEY_PREFIX + rank);
+		String clan = clanKey;
+		if (clan != null)
+		{
+			configManager.unsetConfiguration(ClanRankIconsConfig.GROUP, rankKey(clan, rank));
+		}
+	}
+
+	/**
+	 * @return a share code for the current clan's in-game and hidden icons, or null when not in a clan
+	 */
+	@Nullable
+	String exportShareCode()
+	{
+		if (clanKey == null)
+		{
+			return null;
+		}
+
+		Map<Integer, IconChoice> choices = new LinkedHashMap<>();
+		for (int rank = MAX_RANK; rank >= MIN_RANK; rank--)
+		{
+			IconChoice choice = getChoice(rank);
+			if (choice != null)
+			{
+				choices.put(rank, choice);
+			}
+		}
+		return ShareCode.encode(choices);
+	}
+
+	/**
+	 * Applies a share code to the current clan.
+	 *
+	 * @return how many ranks were changed, or -1 when not in a clan
+	 * @throws IllegalArgumentException if the code isn't valid
+	 */
+	int importShareCode(String code)
+	{
+		Map<Integer, IconChoice> choices = ShareCode.decode(code);
+		if (clanKey == null)
+		{
+			return -1;
+		}
+
+		for (Map.Entry<Integer, IconChoice> entry : choices.entrySet())
+		{
+			setChoice(entry.getKey(), entry.getValue());
+		}
+		return choices.size();
+	}
+
+	private static String rankKey(String clan, int rank)
+	{
+		return "clan_" + clan + "_rank_" + rank;
+	}
+
+	/**
+	 * Remembers which clan we're in, and moves any pre-1.1 choices over to it. Must be called on the client thread.
+	 */
+	private void updateClanKey(ClanSettings settings)
+	{
+		String name = settings.getName();
+		String key = name == null ? null : name.toLowerCase().replaceAll("[^a-z0-9]+", "_");
+		if (key == null || key.equals(clanKey))
+		{
+			return;
+		}
+
+		clanKey = key;
+		for (int rank = MIN_RANK; rank <= MAX_RANK; rank++)
+		{
+			String legacy = configManager.getConfiguration(ClanRankIconsConfig.GROUP, LEGACY_RANK_KEY_PREFIX + rank);
+			if (legacy == null)
+			{
+				continue;
+			}
+
+			if (configManager.getConfiguration(ClanRankIconsConfig.GROUP, rankKey(key, rank)) == null)
+			{
+				configManager.setConfiguration(ClanRankIconsConfig.GROUP, rankKey(key, rank), legacy);
+			}
+			configManager.unsetConfiguration(ClanRankIconsConfig.GROUP, LEGACY_RANK_KEY_PREFIX + rank);
+		}
 	}
 
 	/**
@@ -251,6 +392,8 @@ public class ClanRankIconsPlugin extends Plugin
 		Map<ClanTitle, IconChoice> plan = new LinkedHashMap<>();
 		if (settings != null)
 		{
+			updateClanKey(settings);
+
 			// Highest rank first, so if two ranks share a title the more senior rank's choice wins
 			for (int rank = MAX_RANK; rank >= MIN_RANK; rank--)
 			{
@@ -367,6 +510,11 @@ public class ClanRankIconsPlugin extends Plugin
 	@Nullable
 	private BufferedImage renderChoice(IconChoice choice, int width, int height)
 	{
+		if (choice.getType() == IconChoice.Type.HIDDEN)
+		{
+			return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		}
+
 		BufferedImage source;
 		boolean keepAspectRatio = true;
 		if (choice.getType() == IconChoice.Type.SPRITE)
@@ -413,6 +561,7 @@ public class ClanRankIconsPlugin extends Plugin
 		{
 			return rows;
 		}
+		updateClanKey(settings);
 
 		// Ranks that someone in the clan holds, plus the fixed senior ranks, guests, and anything already customised
 		Set<Integer> ranks = new TreeSet<>(Collections.reverseOrder());
@@ -454,7 +603,7 @@ public class ClanRankIconsPlugin extends Plugin
 				int height = original != null ? original.getHeight() : CHAT_ICON_SIZE;
 				custom = renderChoice(choice, width, height);
 			}
-			rows.add(new RankRow(rank, title.getName(), original, custom));
+			rows.add(new RankRow(rank, title.getName(), original, custom, choice != null && choice.getType() == IconChoice.Type.HIDDEN));
 		}
 		return rows;
 	}

@@ -65,4 +65,15 @@ public interface ClanRankIconsConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "showIconsInPublicChat",
+		name = "Show icons in public chat",
+		description = "Show clan rank icons next to your clanmates' names in public chat",
+		position = 3
+	)
+	default boolean showIconsInPublicChat()
+	{
+		return true;
+	}
 }

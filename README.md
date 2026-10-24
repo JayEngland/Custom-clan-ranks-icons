@@ -10,6 +10,7 @@ Pick your own icon for every rank in your clan. Only you see the change.
 - [Rank icon panel](#rank-icon-panel)
 - [Pick an in-game icon](#pick-an-in-game-icon)
 - [Upload your own image](#upload-your-own-image)
+- [Share codes](#share-codes)
 - [Where your icons show up](#where-your-icons-show-up)
 - [Settings](#settings)
 - [How it works](#how-it-works)
@@ -33,10 +34,14 @@ Open the panel from the gold star button in the RuneLite sidebar. It lists every
 
 If your clan adds or renames ranks while you're online, press **Refresh ranks** to update the list.
 
+Each clan keeps its own icons, so switching accounts or clans won't mix them up.
+
 
 ## Pick an in-game icon
 Press **Game icon** on any rank to open a grid of every clan rank icon in the game.
-Hover an icon to see its name, and click it to use it for that rank.
+Type in the search box to filter by name, hover an icon to see its name, and click it to use it for that rank.
+
+Press **No icon** in the same window to hide that rank's icon completely.
 
 Icons like Dragon, Zenyte, Monarch, the god ranks and the skill ranks are all available, whether or not your clan uses them.
 
@@ -49,12 +54,19 @@ Press **Upload** to use an image from your computer (PNG, JPG or GIF).
 - The image is saved in your RuneLite settings, so you can move or delete the original file afterwards.
 
 
+## Share codes
+Press **Copy share code** to copy your clan's icon setup as a short code, for example `CRI1:126=s1234,100=h`.
+Clanmates with the plugin can press **Paste share code** to get the same icons. Only in-game icons and hidden icons are
+shared. Uploaded images aren't included because they would make the code far too long.
+
+
 ## Where your icons show up
 Your icons replace the originals everywhere the game draws them, on your screen only:
 
 - Clan chat messages
 - The clan member list
 - Clan join/leave messages from RuneLite's Chat Channel plugin (optional)
+- Public chat, next to your clanmates' names (optional)
 
 Press **Reset** on a rank to go back to its normal icon, or turn the plugin off to restore every icon at once.
 
@@ -65,6 +77,7 @@ Press **Reset** on a rank to go back to its normal icon, or turn the plugin off 
 | Show sidebar button | Hide the Clan Rank Icons button once you've set things up. Your icons stay applied. |
 | Keep aspect ratio | Keep the shape of uploaded images instead of stretching them to fill the icon. |
 | Replace join/leave icons | Also swap the icons in clan join/leave messages. |
+| Show icons in public chat | Show clan rank icons next to your clanmates' names in public chat. |
 
 
 ## How it works
@@ -107,6 +120,12 @@ description, and a screenshot if it helps.
 
 
 ## Changelog
+**1.1**
+- Icons are saved separately for each clan.
+- Search box and a "No icon" option in the Game icon picker.
+- Share codes to copy and paste icon setups between clanmates.
+- Optional clan rank icons in public chat.
+
 **1.0**
 - First release: pick an in-game icon or upload your own image for each clan rank.
 - Optional replacement of clan join/leave message icons.

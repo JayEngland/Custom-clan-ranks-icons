@@ -34,14 +34,15 @@ import javax.imageio.ImageIO;
 import lombok.Value;
 
 /**
- * The icon a player picked for a rank: either another game sprite, or an image they uploaded.
- * Stored in the RuneLite config as "sprite:&lt;id&gt;" or "image:&lt;base64 png&gt;".
+ * The icon a player picked for a rank: another game sprite, an image they uploaded, or no icon at all.
+ * Stored in the RuneLite config as "sprite:&lt;id&gt;", "image:&lt;base64 png&gt;" or "hidden".
  */
 @Value
 class IconChoice
 {
 	private static final String SPRITE_PREFIX = "sprite:";
 	private static final String IMAGE_PREFIX = "image:";
+	private static final String HIDDEN = "hidden";
 
 	/**
 	 * Uploaded images are shrunk to this size before saving, so the config stays small.
@@ -51,7 +52,8 @@ class IconChoice
 	enum Type
 	{
 		SPRITE,
-		IMAGE
+		IMAGE,
+		HIDDEN
 	}
 
 	Type type;
@@ -61,6 +63,11 @@ class IconChoice
 	static IconChoice sprite(int spriteId)
 	{
 		return new IconChoice(Type.SPRITE, spriteId, null);
+	}
+
+	static IconChoice hidden()
+	{
+		return new IconChoice(Type.HIDDEN, -1, null);
 	}
 
 	static IconChoice image(BufferedImage image) throws IOException
@@ -85,6 +92,10 @@ class IconChoice
 			{
 				return sprite(Integer.parseInt(value.substring(SPRITE_PREFIX.length())));
 			}
+			if (value.equals(HIDDEN))
+			{
+				return hidden();
+			}
 			if (value.startsWith(IMAGE_PREFIX))
 			{
 				return new IconChoice(Type.IMAGE, -1, value.substring(IMAGE_PREFIX.length()));
@@ -98,7 +109,15 @@ class IconChoice
 
 	String serialize()
 	{
-		return type == Type.SPRITE ? SPRITE_PREFIX + spriteId : IMAGE_PREFIX + imageData;
+		switch (type)
+		{
+			case SPRITE:
+				return SPRITE_PREFIX + spriteId;
+			case HIDDEN:
+				return HIDDEN;
+			default:
+				return IMAGE_PREFIX + imageData;
+		}
 	}
 
 	@Nullable

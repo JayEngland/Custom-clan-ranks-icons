@@ -40,4 +40,5 @@ class RankRow
 	BufferedImage originalIcon;
 	@Nullable
 	BufferedImage customIcon;
+	boolean hidden;
 }
