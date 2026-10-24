@@ -133,7 +133,10 @@ public class ClanRankIconsPlugin extends Plugin
 			.priority(10)
 			.panel(panel)
 			.build();
-		clientToolbar.addNavigation(navButton);
+		if (config.showSidebarButton())
+		{
+			clientToolbar.addNavigation(navButton);
+		}
 
 		clientThread.invokeLater(() ->
 		{
@@ -191,6 +194,19 @@ public class ClanRankIconsPlugin extends Plugin
 	{
 		if (!ClanRankIconsConfig.GROUP.equals(event.getGroup()))
 		{
+			return;
+		}
+
+		if ("showSidebarButton".equals(event.getKey()))
+		{
+			if (config.showSidebarButton())
+			{
+				clientToolbar.addNavigation(navButton);
+			}
+			else
+			{
+				clientToolbar.removeNavigation(navButton);
+			}
 			return;
 		}
 

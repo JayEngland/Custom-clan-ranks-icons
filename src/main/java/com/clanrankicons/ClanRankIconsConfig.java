@@ -54,4 +54,15 @@ public interface ClanRankIconsConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "showSidebarButton",
+		name = "Show sidebar button",
+		description = "Show the Clan Rank Icons button in the RuneLite sidebar. Your icons stay applied while it's hidden",
+		position = 0
+	)
+	default boolean showSidebarButton()
+	{
+		return true;
+	}
 }

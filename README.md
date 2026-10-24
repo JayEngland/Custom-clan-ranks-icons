@@ -29,6 +29,7 @@ settings, so they come back next time you log in. If your clan adds or renames r
 
 ### Settings
 
+- **Show sidebar button**: hide the Clan Rank Icons button once you've set things up. Your icons stay applied.
 - **Keep aspect ratio**: keep the shape of uploaded images instead of stretching them to fill the icon.
 - **Replace join/leave icons**: also swap the icons in clan join/leave messages.
 
